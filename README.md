@@ -6,7 +6,11 @@ This repository provides codes to reproduce the experiment results in paper: Yux
 
 In our experiments, we use our copula EM algorithm in the [R pacakge](https://github.com/udellgroup/mixedgcImp). For other algorithms used in our paper, we adopt the following implementation: [sbgcop](https://cran.r-project.org/web/packages/sbgcop/index.html), [missForest](https://cran.r-project.org/web/packages/missForest/index.html), imputeFAMD in R package [missMDA](https://cran.r-project.org/web/packages/missMDA/index.html), [xPCA](https://gitlab.com/xpca/xpcar), [softImpute](https://cran.r-project.org/web/packages/softImpute/index.html) and [GLRM](https://github.com/madeleineudell/LowRankModels.jl). All codes are public available. To replicate our experimental results, make sure all invovled algorithms are installed.
 
-## Organaization
+## Datasets
+
+We include a copy for each used real world dataset. They are also all public available: [GSS](https://gssdataexplorer.norc.org/), [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/), [CAL500exp](http://slam.iis.sinica.edu.tw/demo/CAL500exp/), [GBSG](https://cran.r-project.org/web/packages/mfp/), [TIPS](http://ggobi.org/book/), and ESL and LEV at https://waikato.github.io/weka-wiki/datasets/ (item named "A gzip'ed tar containing ordinal, real-world datasets donated by Professor Arie Ben David (datasets-arie_ben_david.tar.gz, 11,348 Bytes)").
+
+## Organization
 
 Our provided codes are divided by figures/tables. While replicating the exact results may be time demanding, users can use a smaller number of repetitions. See each file for details. Currently, codes for replicating Figure 4 and Table 4 are provided. 
 
