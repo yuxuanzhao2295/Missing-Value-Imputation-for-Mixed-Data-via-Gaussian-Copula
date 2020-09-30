@@ -4,7 +4,7 @@ library(clusterGeneration) # for generate random correlation matrices
 library(mvtnorm)
 # change the working directory to "Missing-Value-Imputation-for-Mixed-Data-via-Gaussian-Copula"
 source('fun_auxi.R')
-source('fun_eval.R')
+
 
 misRatio = 0.3
 nrep = 100 

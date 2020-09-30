@@ -62,3 +62,57 @@ map_ordinal_FAMD = function(x){
   y = unlist(strsplit(x, split = '_', fixed = TRUE))
   as.numeric(y[(1:l)*2])
 }
+
+## cross-validation for imputing missing values
+imputeCV = function(xdata, seed = 1, rank, func, levels =20){
+  nfold = 5
+  # generate location
+  ind = which(!is.na(xdata))
+  size = round(length(ind)/nfold)
+  set.seed(seed)
+  ind = sample(ind, length(ind))
+  loc.list = list()
+  for (i in 1:nfold){
+    start = (i-1)*size + 1
+    if (i<5) end = i*size else end = length(ind)
+    loc.list[[i]] = ind[start:end]
+  }
+  
+  error_cv = numeric(nfold)
+  for (i in 1:nfold){
+    # generate training and testing data
+    Xall = xdata
+    Xobs = Xall
+    Xobs[loc.list[[i]]] = NA
+    ind.emptyrow = which(apply(Xobs, 1, function(x){sum(!is.na(x))}) == 0)
+    if (length(ind.emptyrow)>0){
+      Xall = xdata[-ind.emptyrow,]
+      Xobs = Xobs[-ind.emptyrow,]
+    }
+    ind.disc = which(apply(Xobs, 2, function(x){length(unique(x))}) < levels)
+    
+    # apply algorithm
+    if (func == 'xpca'){
+      est = xpca(Xobs, rank = rank)
+      xhat = est$fittedEsts
+      for (s in 1:length(ind.disc)){
+        xhat[,ind.disc[s]] = trunc.rating(xhat[,ind.disc[s]], 
+                                          xmin = max(Xobs[,ind.disc[s]], na.rm = TRUE), 
+                                          xmax = min(Xobs[,ind.disc[s]], na.rm = TRUE))
+      } 
+      error_cv[i] = mean(cal_mae_scaled(xhat = xhat, xobs = Xobs, x = Xall))
+    }
+    if (func == 'imputeFAMD'){
+      require(missMDA)
+      Xobs = as.data.frame(Xobs)
+      for (s in 1:length(ind.disc)) Xobs[,ind.disc[s]] = as.factor(Xobs[,ind.disc[s]])
+      est = imputeFAMD(Xobs, ncp = rank)
+      xhat = est$completeObs
+      for (s in 1:length(ind.disc)) xhat[,ind.disc[s]] = map_ordinal_FAMD(xhat[,ind.disc[s]])
+      error_cv[i] = mean(cal_mae_scaled(xhat = xhat, xobs = Xobs, x = Xall))
+    }
+    
+  }
+  error_cv
+}
+
