@@ -64,8 +64,8 @@ map_ordinal_FAMD = function(x){
 }
 
 ## cross-validation for imputing missing values
-imputeCV = function(xdata, seed = 1, rank, func, levels =20){
-  nfold = 5
+imputeCV = function(xdata, rank, func, nfold = 5, levels=20, seed=1, verbose=FALSE){
+  xdata = as.matrix(xdata)
   # generate location
   ind = which(!is.na(xdata))
   size = round(length(ind)/nfold)
@@ -74,7 +74,7 @@ imputeCV = function(xdata, seed = 1, rank, func, levels =20){
   loc.list = list()
   for (i in 1:nfold){
     start = (i-1)*size + 1
-    if (i<5) end = i*size else end = length(ind)
+    if (i<nfold) end = i*size else end = length(ind)
     loc.list[[i]] = ind[start:end]
   }
   
@@ -89,11 +89,15 @@ imputeCV = function(xdata, seed = 1, rank, func, levels =20){
       Xall = xdata[-ind.emptyrow,]
       Xobs = Xobs[-ind.emptyrow,]
     }
-    ind.disc = which(apply(Xobs, 2, function(x){length(unique(x))}) < levels)
+    ind.disc = which(apply(Xobs, 2, function(x){length(unique(x))} ) < levels)
     
     # apply algorithm
     if (func == 'xpca'){
-      est = xpca(Xobs, rank = rank)
+      require(xpcaR)
+      est = try(xpca(Xobs, rank = rank))
+      if (class(est) == "try-error"){
+        stop(paste("Use smaller rank: xPCA fails for rank ",rank, sep = ""))
+      }
       xhat = est$fittedEsts
       for (s in 1:length(ind.disc)){
         xhat[,ind.disc[s]] = trunc.rating(xhat[,ind.disc[s]], 
@@ -102,16 +106,22 @@ imputeCV = function(xdata, seed = 1, rank, func, levels =20){
       } 
       error_cv[i] = mean(cal_mae_scaled(xhat = xhat, xobs = Xobs, x = Xall))
     }
+    
     if (func == 'imputeFAMD'){
       require(missMDA)
       Xobs = as.data.frame(Xobs)
       for (s in 1:length(ind.disc)) Xobs[,ind.disc[s]] = as.factor(Xobs[,ind.disc[s]])
-      est = imputeFAMD(Xobs, ncp = rank)
+      est = try(imputeFAMD(Xobs, ncp = rank))
+      #est = imputeFAMD(Xobs, ncp = rank)
+      if (class(est) == "try-error"){
+        stop(paste("Use smaller rank: imputeFAMD fails for rank ",rank, sep = ""))
+      }
       xhat = est$completeObs
       for (s in 1:length(ind.disc)) xhat[,ind.disc[s]] = map_ordinal_FAMD(xhat[,ind.disc[s]])
       error_cv[i] = mean(cal_mae_scaled(xhat = xhat, xobs = Xobs, x = Xall))
     }
     
+    if (verbose) print(paste("finish fold ",i, sep = ""))
   }
   error_cv
 }
